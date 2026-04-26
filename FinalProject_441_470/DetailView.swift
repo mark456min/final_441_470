@@ -1,8 +1,3 @@
-//
-//  DetailView.swift
-//  FinalProject_441_470
-//
-
 import SwiftUI
 
 struct DetailView: View {
@@ -12,7 +7,7 @@ struct DetailView: View {
         ScrollView(showsIndicators: false) {
             VStack(spacing: 16) {
                 
-                // หัวข้อ
+                // 📍 หัวข้อ
                 HStack {
                     Text(viewModel.cityName)
                         .font(.system(size: 28, weight: .bold, design: .rounded))
@@ -39,8 +34,12 @@ struct DetailView: View {
                                 .foregroundColor(.primary)
                         }
                         Spacer()
-                        Text(viewModel.petState)
-                            .font(.system(size: 60))
+                        
+                        // 🐶 ส่วนรูปภาพน้องหมา
+                        Image(viewModel.petState)
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: 80, height: 80)
                     }
                     .padding(20)
                     

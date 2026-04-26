@@ -39,29 +39,32 @@ struct HomePetView: View {
                 Spacer()
                 
                 // 🐶 ส่วนสัตว์เลี้ยง
-                ZStack {
-                    Circle()
-                        .fill(Color.white.opacity(0.4))
-                        .frame(width: 240, height: 240)
-                    
-                    Text(viewModel.petState)
-                        .font(.system(size: 140))
-                        .scaleEffect(petScale)
-                        .offset(y: isFloating ? -8 : 8)
-                        .animation(.easeInOut(duration: 2.5).repeatForever(autoreverses: true), value: isFloating)
-                        .onAppear { isFloating = true }
-                        .onTapGesture {
-                            let impact = UIImpactFeedbackGenerator(style: .medium)
-                            impact.impactOccurred()
-                            withAnimation(.spring(response: 0.3, dampingFraction: 0.5)) {
-                                petScale = 1.15
-                            }
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
-                                withAnimation { petScale = 1.0 }
-                                showMiniGame = true
-                            }
-                        }
-                }
+                                ZStack {
+                                    Circle()
+                                        .fill(Color.white.opacity(0.4))
+                                        .frame(width: 240, height: 240)
+                                    
+                                    // 👇 เปลี่ยนจาก Text เป็น Image ตรงนี้ครับ 👇
+                                    Image(viewModel.petState)
+                                        .resizable() // ทำให้รูปยืดหดได้
+                                        .scaledToFit() // จัดสัดส่วนไม่ให้รูปเบี้ยว
+                                        .frame(width: 160, height: 160) // กำหนดขนาดรูปภาพตามต้องการ
+                                        .scaleEffect(petScale)
+                                        .offset(y: isFloating ? -8 : 8)
+                                        .animation(.easeInOut(duration: 2.5).repeatForever(autoreverses: true), value: isFloating)
+                                        .onAppear { isFloating = true }
+                                        .onTapGesture {
+                                            let impact = UIImpactFeedbackGenerator(style: .medium)
+                                            impact.impactOccurred()
+                                            withAnimation(.spring(response: 0.3, dampingFraction: 0.5)) {
+                                                petScale = 1.15
+                                            }
+                                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+                                                withAnimation { petScale = 1.0 }
+                                                showMiniGame = true
+                                            }
+                                        }
+                                }
                 
                 Spacer()
                 
