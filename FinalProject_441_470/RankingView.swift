@@ -8,37 +8,40 @@
 import SwiftUI
 
 struct RankingView: View {
-    // ข้อมูลจำลองสำหรับโชว์
-    let mockCities = [
-        ("Chiang Mai, Thailand", 157, "🇹🇭"),
-        ("Yangon, Myanmar", 155, "🇲🇲"),
-        ("Riyadh, Saudi Arabia", 152, "🇸🇦"),
-        ("Ulaanbaatar, Mongolia", 148, "🇲🇳"),
-        ("Chongqing, China", 139, "🇨🇳")
-    ]
-    
+    // ข้อมูลจำลอง 10 อันดับเมืองที่มีมลพิษสูงสุด (ข้อมูลสมมติเพื่อการแสดงผล)
+    let cities = DataLoader.load().topCities
     var body: some View {
         NavigationView {
-            List(0..<mockCities.count, id: \.self) { index in
+            List(Array(cities.enumerated()), id: \.element.id) { index, city in
                 HStack {
-                    Text("\(index + 1)").font(.headline).frame(width: 30, alignment: .leading)
-                    Text(mockCities[index].2).font(.title2) // ธงชาติ
-                    Text(mockCities[index].0).font(.body) // ชื่อเมือง
+                                    Text("\(index + 1)")
+                                        .font(.headline)
+                                        .frame(width: 30, alignment: .leading)
+                                    
+                                    Text(city.flag) // เข้าถึงข้อมูลผ่านชื่อตัวแปรที่อ่านง่าย
+                                        .font(.title2)
+                                    
+                                    Text(city.name)
+                                        .font(.body)
+                                    
+                                    Spacer()
+                                    
+                                    Text("\(city.aqi)")
+                                        .font(.system(size: 16, weight: .bold))
+                                        .foregroundColor(.white)
+                                        .frame(width: 45, height: 30)
+                                        .background(RoundedRectangle(cornerRadius: 6).fill(getAqiColor(aqi: city.aqi)))
+                                }
+                                .padding(.vertical, 4)
+                            }
+                            .navigationTitle("10 อันดับโลก")
+                            .listStyle(InsetGroupedListStyle())
+                        }
+                    }
                     
-                    Spacer()
-                    
-                    // ป้าย AQI สีแดง/ส้ม
-                    Text("\(mockCities[index].1)")
-                        .font(.headline)
-                        .foregroundColor(.white)
-                        .padding(.vertical, 5)
-                        .padding(.horizontal, 10)
-                        .background(RoundedRectangle(cornerRadius: 8).fill(mockCities[index].1 > 150 ? Color.red : Color.orange))
+                    func getAqiColor(aqi: Int) -> Color {
+                        if aqi > 150 { return .purple }
+                        if aqi > 100 { return .red }
+                        return .orange
+                    }
                 }
-                .padding(.vertical, 4)
-            }
-            .navigationTitle("Ranking (Worldwide)")
-            .listStyle(PlainListStyle())
-        }
-    }
-}
