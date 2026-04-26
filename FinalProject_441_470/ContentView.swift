@@ -1,14 +1,7 @@
-//
-//  ContentView.swift
-//  FinalProject_441_470
-//
-//  Created by Ativit Tantipisit on 26/4/2569 BE.
-//
-
 import SwiftUI
 
 struct ContentView: View {
-    // 1. สร้าง ViewModel ไว้ที่หน้าหลักตัวเดียว
+    // สร้าง ViewModel ตัวหลักที่นี่
     @StateObject var viewModel = WeatherViewModel()
     
     var body: some View {
@@ -38,7 +31,7 @@ struct ContentView: View {
                 }
         }
         .accentColor(.blue)
-        // 2. แชร์ viewModel ให้ทุกหน้าใน TabView เข้าถึงได้
+        // แชร์ข้อมูลให้หน้าลูกๆ ทุกหน้า
         .environmentObject(viewModel)
     }
 }
