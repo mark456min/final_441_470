@@ -3,116 +3,201 @@
 //  FinalProject_441_470
 //
 
+//
+//  DetailView.swift
+//  FinalProject_441_470
+//
+
+//
+//  DetailView.swift
+//  FinalProject_441_470
+//
+
 import SwiftUI
 
 struct DetailView: View {
-    // รับ viewModel มาจาก ContentView
     @ObservedObject var viewModel: WeatherViewModel
     
     var body: some View {
-        ScrollView {
+        ScrollView(showsIndicators: false) {
             VStack(spacing: 20) {
                 
-                // หัวข้อ (ใช้ชื่อเมืองจริงๆ จาก API)
-                Text("📍 \(viewModel.cityName)")
-                    .font(.title2)
-                    .bold()
-                    .padding(.top)
-                
-                // การ์ดหลัก (เปลี่ยนสีตามค่า AQI)
-                VStack(spacing: 15) {
-                    HStack {
-                        VStack {
-                            Text("\(viewModel.aqi)") // ดึง AQI จริงมาโชว์
-                                .font(.system(size: 40, weight: .bold))
-                            Text("US AQI")
-                                .font(.caption)
-                        }
-                        .padding()
-                        .background(RoundedRectangle(cornerRadius: 10).fill(Color.white.opacity(0.3)))
-                        
-                        Text(getAqiStatus(aqi: viewModel.aqi)) // คำอธิบายภาษาอังกฤษ
-                            .font(.title2).bold()
-                        
-                        Spacer()
-                        
-                        Text(viewModel.petState) // ใช้หน้า Pet ตัวเดิม
-                            .font(.system(size: 50))
-                    }
-                    
-                    Divider()
-                    
-                    HStack {
-                        Text("Main pollutant: PM2.5")
-                        Spacer()
-                        // ค่าประมาณการ PM2.5 (ถ้าไม่มี API ให้มา)
-                        Text("\(Double(viewModel.aqi) * 0.4, specifier: "%.1f") µg/m³").bold()
-                    }
+                // หัวข้อ
+                HStack {
+                    Image(systemName: "mappin.and.ellipse")
+                        .foregroundColor(.red)
+                    Text(viewModel.cityName)
+                        .font(.system(size: 26, weight: .bold, design: .rounded))
+                    Spacer()
                 }
-                .padding()
-                .background(RoundedRectangle(cornerRadius: 15).fill(backgroundColor(for: viewModel.aqi)))
+                .padding(.horizontal)
+                .padding(.top, 10)
+                
+                // Bento Box 1: การ์ดหลักใหญ่สุด
+                HStack(spacing: 20) {
+                    // กล่อง AQI
+                    VStack(alignment: .leading, spacing: 10) {
+                        Text("ดัชนีคุณภาพอากาศ")
+                            .font(.caption)
+                            .fontWeight(.bold)
+                            .foregroundColor(.white.opacity(0.8))
+                        
+                        Text("\(viewModel.aqi)")
+                            .font(.system(size: 55, weight: .heavy, design: .rounded))
+                            .foregroundColor(.white)
+                        
+                        Text(getAqiStatus(aqi: viewModel.aqi))
+                            .font(.headline)
+                            .foregroundColor(.white)
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 5)
+                            .background(Color.black.opacity(0.2))
+                            .clipShape(Capsule())
+                    }
+                    .padding(20)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(premiumGradient(for: viewModel.aqi))
+                    .clipShape(RoundedRectangle(cornerRadius: 30, style: .continuous))
+                    .shadow(color: .black.opacity(0.15), radius: 15, x: 0, y: 10)
+                    
+                    // กล่อง PM 2.5
+                    VStack(alignment: .leading) {
+                        Image(systemName: "wind")
+                            .font(.title)
+                            .foregroundColor(statusColor(for: viewModel.aqi))
+                        
+                        Spacer()
+                        
+                        Text("PM 2.5")
+                            .font(.subheadline)
+                            .foregroundColor(.gray)
+                        
+                        Text("\(Double(viewModel.aqi) * 0.4, specifier: "%.1f")")
+                            .font(.system(size: 28, weight: .bold, design: .rounded))
+                        Text("µg/m³")
+                            .font(.caption)
+                            .foregroundColor(.gray)
+                    }
+                    .padding(20)
+                    .frame(width: 140)
+                    .background(Color(UIColor.secondarySystemGroupedBackground))
+                    .clipShape(RoundedRectangle(cornerRadius: 30, style: .continuous))
+                    .shadow(color: .black.opacity(0.05), radius: 10, x: 0, y: 5)
+                }
                 .padding(.horizontal)
                 
-                // พยากรณ์รายชั่วโมง (เลื่อนแนวนอน)
+                // Bento Box 2: พยากรณ์รายชั่วโมง
                 VStack(alignment: .leading) {
-                    Text("Hourly forecast")
+                    Text("พยากรณ์รายชั่วโมง")
                         .font(.headline)
                         .padding(.horizontal)
                     
                     ScrollView(.horizontal, showsIndicators: false) {
-                        HStack(spacing: 20) {
+                        HStack(spacing: 15) {
                             ForEach(0..<6, id: \.self) { i in
-                                
-                                // จำลองค่าฝุ่นในชั่วโมงถัดๆ ไป (บวกเพิ่มนิดหน่อยให้ดูสมจริง)
                                 let forecastAqi = viewModel.aqi + (i * 2)
-                                
-                                VStack(spacing: 10) {
-                                    // โชว์เวลาจริง (Now, 14:00, 15:00)
+                                VStack(spacing: 12) {
                                     Text(getFormattedTime(plusHours: i))
                                         .font(.subheadline)
-                                        .foregroundColor(.secondary)
+                                        .fontWeight(i == 0 ? .bold : .medium)
+                                        .foregroundColor(i == 0 ? .primary : .secondary)
                                     
-                                    Text("\(forecastAqi)")
-                                        .font(.system(size: 18, weight: .bold))
-                                        .padding(8)
-                                        .background(RoundedRectangle(cornerRadius: 8).fill(backgroundColor(for: forecastAqi)))
+                                    ZStack {
+                                        Circle()
+                                            .fill(premiumGradient(for: forecastAqi))
+                                            .frame(width: 50, height: 50)
+                                        
+                                        Text("\(forecastAqi)")
+                                            .font(.system(size: 18, weight: .bold, design: .rounded))
+                                            .foregroundColor(.white)
+                                    }
                                     
-                                    // ถ้าเป็นกลางคืนโชว์พระจันทร์ กลางวันโชว์พระอาทิตย์
                                     Image(systemName: isNightTime(plusHours: i) ? "moon.fill" : "sun.max.fill")
-                                        .foregroundColor(isNightTime(plusHours: i) ? .gray : .orange)
-                                    
-                                    Text("30°")
-                                        .font(.caption)
+                                        .foregroundColor(isNightTime(plusHours: i) ? .blue : .orange)
+                                        .font(.system(size: 20))
                                 }
+                                .padding(.vertical, 15)
+                                .padding(.horizontal, 10)
+                                .background(Color(UIColor.secondarySystemGroupedBackground))
+                                .clipShape(RoundedRectangle(cornerRadius: 25, style: .continuous))
                             }
                         }
                         .padding(.horizontal)
+                        .padding(.bottom, 10)
                     }
                 }
-                .padding(.vertical)
-                .background(RoundedRectangle(cornerRadius: 15).fill(Color.white).shadow(radius: 2))
-                .padding(.horizontal)
+                
+                // Bento Box 3: ระบบแนะนำกิจกรรม (Activity Recommender)
+                VStack(alignment: .leading, spacing: 15) {
+                    Text("AI แนะนำกิจกรรม")
+                        .font(.headline)
+                        .padding(.horizontal)
+                    
+                    let activity = getActivityRecommendation(aqi: viewModel.aqi)
+                    
+                    HStack(spacing: 20) {
+                        ZStack {
+                            Circle()
+                                .fill(activity.color.opacity(0.2))
+                                .frame(width: 60, height: 60)
+                            Image(systemName: activity.icon)
+                                .font(.system(size: 30))
+                                .foregroundColor(activity.color)
+                        }
+                        
+                        Text(activity.text)
+                            .font(.system(size: 16, weight: .medium, design: .rounded))
+                            .lineSpacing(4)
+                        
+                        Spacer()
+                    }
+                    .padding(20)
+                    .background(Color(UIColor.secondarySystemGroupedBackground))
+                    .clipShape(RoundedRectangle(cornerRadius: 30, style: .continuous))
+                    .shadow(color: .black.opacity(0.05), radius: 10, x: 0, y: 5)
+                    .padding(.horizontal)
+                }
+                .padding(.bottom, 30)
                 
             }
         }
-        .background(Color(UIColor.systemGroupedBackground))
+        .background(Color(UIColor.systemGroupedBackground).ignoresSafeArea())
     }
     
-    // MARK: - Functions คำนวณเวลาและสี
+    // MARK: - Helper Functions
+    func premiumGradient(for aqi: Int) -> LinearGradient {
+        switch aqi {
+        case 0...50:
+            return LinearGradient(colors: [Color(hex: "11998e"), Color(hex: "38ef7d")], startPoint: .topLeading, endPoint: .bottomTrailing)
+        case 51...100:
+            return LinearGradient(colors: [Color(hex: "f12711"), Color(hex: "f5af19")], startPoint: .topLeading, endPoint: .bottomTrailing)
+        case 101...150:
+            return LinearGradient(colors: [Color(hex: "FF416C"), Color(hex: "FF4B2B")], startPoint: .topLeading, endPoint: .bottomTrailing)
+        default:
+            return LinearGradient(colors: [Color(hex: "cb2d3e"), Color(hex: "ef473a")], startPoint: .topLeading, endPoint: .bottomTrailing)
+        }
+    }
     
-    // 1. ฟังก์ชันหาเวลาล่วงหน้า
+    func statusColor(for aqi: Int) -> Color {
+        switch aqi {
+        case 0...50: return .green
+        case 51...100: return .yellow
+        case 101...150: return .orange
+        default: return .red
+        }
+    }
+    
     func getFormattedTime(plusHours: Int) -> String {
-        if plusHours == 0 { return "Now" }
+        if plusHours == 0 { return "ตอนนี้" }
         let calendar = Calendar.current
         if let futureDate = calendar.date(byAdding: .hour, value: plusHours, to: Date()) {
             let formatter = DateFormatter()
-            formatter.dateFormat = "HH:00" // ฟอร์แมตเวลา 24 ชั่วโมง
+            formatter.dateFormat = "HH:00"
             return formatter.string(from: futureDate)
         }
         return ""
     }
     
-    // 2. ฟังก์ชันเช็คเวลากลางคืน (หลัง 6 โมงเย็น ถึง ตี 5)
     func isNightTime(plusHours: Int) -> Bool {
         let calendar = Calendar.current
         if let futureDate = calendar.date(byAdding: .hour, value: plusHours, to: Date()) {
@@ -122,25 +207,24 @@ struct DetailView: View {
         return false
     }
     
-    // 3. ฟังก์ชันจัดสีตาม AQI มาตรฐานสากล
-    func backgroundColor(for aqi: Int) -> Color {
+    func getAqiStatus(aqi: Int) -> String {
         switch aqi {
-        case 0...50: return .green
-        case 51...100: return .yellow
-        case 101...150: return .orange
-        case 151...200: return .red
-        default: return .purple
+        case 0...50: return "คุณภาพดีมาก"
+        case 51...100: return "ปานกลาง"
+        case 101...150: return "เริ่มมีผลกระทบ"
+        default: return "อันตราย"
         }
     }
     
-    // 4. คำอธิบายสถานะภาษาอังกฤษ
-    func getAqiStatus(aqi: Int) -> String {
-        switch aqi {
-        case 0...50: return "Good"
-        case 51...100: return "Moderate"
-        case 101...150: return "Unhealthy"
-        case 151...200: return "Unhealthy"
-        default: return "Hazardous"
+    func getActivityRecommendation(aqi: Int) -> (text: String, icon: String, color: Color) {
+        if aqi <= 50 {
+            return ("อากาศเคลียร์! เหมาะกับการออกไปวิ่ง หรือซ้อมบาสเกตบอลกลางแจ้งมากๆ 🏀", "figure.basketball", .green)
+        } else if aqi <= 100 {
+            return ("อากาศปานกลาง เดินเล่นชิลๆ ได้ แต่เลี่ยงการเหนื่อยหอบหนักๆ นะ 🚶", "figure.walk", .yellow)
+        } else if aqi <= 150 {
+            return ("ฝุ่นเริ่มเยอะ แนะนำให้เข้ายิมไปเวทเทรนนิ่งสร้างกล้ามเนื้อดีกว่า 🏋️", "dumbbell.fill", .orange)
+        } else {
+            return ("อากาศอันตราย! งดออกบ้าน แล้วนั่งกด Valorant อยู่ห้องยาวๆ ไปเลย 🎮", "gamecontroller.fill", .red)
         }
     }
 }

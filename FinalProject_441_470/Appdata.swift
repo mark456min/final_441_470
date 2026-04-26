@@ -53,7 +53,7 @@ class DataLoader {
               let data = try? Data(contentsOf: url),
               let decodedData = try? JSONDecoder().decode(AppDataInfo.self, from: data) else {
             // ถ้าไม่เจอไฟล์หรือโครงสร้างพัง ให้พ่น Error ออกมา
-            fatalError("❌ ไม่สามารถโหลดหรือถอดรหัสไฟล์ aqi_data.json ได้")
+            fatalError("ไม่สามารถโหลดหรือถอดรหัสไฟล์ aqi_data.json ได้")
         }
         return decodedData
     }
