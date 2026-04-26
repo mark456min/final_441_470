@@ -8,36 +8,37 @@
 import SwiftUI
 
 struct ContentView: View {
+    // 1. สร้าง ViewModel ไว้ที่หน้าหลักตัวเดียว
+    @StateObject var viewModel = WeatherViewModel()
+    
     var body: some View {
         TabView {
-            // 1. หน้าสัตว์เลี้ยงดึง API จริง (โค้ดเดิมของคุณ)
             HomePetView()
                 .tabItem {
                     Image(systemName: "house.fill")
                     Text("หน้าแรก")
                 }
             
-            // 2. หน้าจัดอันดับ
             RankingView()
                 .tabItem {
                     Image(systemName: "list.number")
                     Text("จัดอันดับ")
                 }
             
-            // 3. หน้าแผนที่
             MapAqiView()
                 .tabItem {
                     Image(systemName: "map.fill")
                     Text("แผนที่")
                 }
             
-            // 4. หน้ารายละเอียด
             DetailView()
                 .tabItem {
                     Image(systemName: "info.circle.fill")
                     Text("รายละเอียด")
                 }
         }
-        .accentColor(.blue) // สีของปุ่ม Tab ที่ถูกเลือก
+        .accentColor(.blue)
+        // 2. แชร์ viewModel ให้ทุกหน้าใน TabView เข้าถึงได้
+        .environmentObject(viewModel)
     }
 }
