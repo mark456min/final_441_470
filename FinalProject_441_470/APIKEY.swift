@@ -14,7 +14,7 @@ struct AirData: Codable, Sendable {
 
 struct CurrentWeather: Codable, Sendable {
     let pollution: Pollution
-    let weather: Weather // เพิ่มการรับค่า weather
+    let weather: Weather
 }
 
 struct Pollution: Codable, Sendable {
@@ -22,16 +22,16 @@ struct Pollution: Codable, Sendable {
 }
 
 struct Weather: Codable, Sendable {
-    let tp: Int // อุณหภูมิอากาศ (องศาเซลเซียส)
+    let tp: Int
 }
 
-// MARK: - ViewModel (คงเดิมไว้ทั้งหมด)
+// MARK: - ViewModel
 @MainActor
 class WeatherViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
     @Published var cityName: String = "กำลังค้นหาตำแหน่ง..."
     @Published var aqi: Int = 0
-    @Published var temperature: Int = 0 // เพิ่มตัวแปรเก็บอุณหภูมิ
-    @Published var petState: String = "normal"
+    @Published var temperature: Int = 0
+    @Published var petState: String = "normal" // ค่าเริ่มต้น
     @Published var healthMessage: String = "รอสักครู่..."
     
     private let locationManager = CLLocationManager()
@@ -77,7 +77,7 @@ class WeatherViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
             
             self.aqi = decodedResponse.data.current.pollution.aqius
             self.cityName = decodedResponse.data.city
-            self.temperature = decodedResponse.data.current.weather.tp // เก็บค่าอุณหภูมิ
+            self.temperature = decodedResponse.data.current.weather.tp
             self.updatePetState()
             print("✅ Updated: \(self.cityName) AQI: \(self.aqi) Temp: \(self.temperature)")
         } catch {
@@ -87,21 +87,21 @@ class WeatherViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
     }
     
     func updatePetState() {
-            switch aqi {
-            case 0...50:
-                petState = "normal" // 👈 ใส่ชื่อไฟล์รูปภาพตอนร่าเริง
-                healthMessage = "อากาศดีมาก! ออกไปวิ่งเล่นกันเถอะ"
-            case 51...100:
-                petState = "normal" // 👈 ใส่ชื่อไฟล์รูปภาพตอนปกติ
-                healthMessage = "อากาศปานกลาง ระวังตัวด้วยนะ"
-            case 101...150:
-                petState = "mad" // 👈 ใส่ชื่อไฟล์รูปภาพตอนหอบ/ใส่หน้ากาก
-                healthMessage = "เริ่มหายใจลำบากแล้ว... ใส่หน้ากากด้วย"
-            default:
-                petState = "mad" // 👈 ใส่ชื่อไฟล์รูปภาพตอนป่วย
-                healthMessage = "อากาศอันตราย! รีบเข้าที่ร่มด่วน"
-            }
+        switch aqi {
+        case 0...50:
+            petState = "happy" // เปลี่ยนเป็นหน้าแมวมีความสุข
+            healthMessage = "อากาศดีมาก! ออกไปวิ่งเล่นกันเถอะ"
+        case 51...100:
+            petState = "normal" // หน้าแมวปกติ
+            healthMessage = "อากาศปานกลาง ระวังตัวด้วยนะ"
+        case 101...150:
+            petState = "mad" // หน้าแมวโกรธ/ป่วย
+            healthMessage = "เริ่มหายใจลำบากแล้ว... ใส่หน้ากากด้วย"
+        default:
+            petState = "mad" // หน้าแมวโกรธ/ป่วย
+            healthMessage = "อากาศอันตราย! รีบเข้าที่ร่มด่วน"
         }
+    }
     
     nonisolated func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
         guard let location = locations.last else { return }

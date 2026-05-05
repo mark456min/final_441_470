@@ -7,7 +7,7 @@ struct DetailView: View {
         ScrollView(showsIndicators: false) {
             VStack(spacing: 16) {
                 
-                // 📍 หัวข้อ
+                //หัวข้อ
                 HStack {
                     Text(viewModel.cityName)
                         .font(.system(size: 28, weight: .bold, design: .rounded))
@@ -19,7 +19,7 @@ struct DetailView: View {
                 .padding(.horizontal, 24)
                 .padding(.top, 16)
                 
-                // 📦 การ์ด 1: สรุปค่ามลพิษ
+                //การ์ด 1: สรุปค่ามลพิษ
                 VStack(spacing: 0) {
                     HStack {
                         VStack(alignment: .leading, spacing: 4) {
@@ -35,7 +35,7 @@ struct DetailView: View {
                         }
                         Spacer()
                         
-                        // 🐶 ส่วนรูปภาพน้องหมา
+                        //ส่วนรูปภาพน้องหมา
                         Image(viewModel.petState)
                             .resizable()
                             .scaledToFit()

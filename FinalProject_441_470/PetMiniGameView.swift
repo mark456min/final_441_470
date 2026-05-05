@@ -87,18 +87,19 @@ struct PetMiniGameView: View {
                 
                 Spacer()
                 
-                // สัตว์เลี้ยง
-                Text(petState)
-                    .font(.system(size: 150))
+                // 🌟 แก้ไขตรงนี้: เปลี่ยนจาก Text เป็น Image ให้ดึงรูปแมวมาโชว์
+                Image(petState)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 180, height: 180)
                     .offset(y: isPlaying ? -20 : 0)
                     .animation(isPlaying ? .easeInOut(duration: 0.4).repeatForever(autoreverses: true) : .default, value: isPlaying)
                     .padding(.bottom, 50)
             }
             
-            // 🌟 แก้ไขจุดที่ทำให้แอปแครช (ใส่เงื่อนไข if ป้องกัน)
+            // Render ฝุ่น
             if isPlaying {
                 ForEach(0..<dustPositions.count, id: \.self) { index in
-                    // เช็คก่อนว่ายังมีข้อมูลใน Array อยู่จริงๆ ไหม
                     if index < dustPositions.count {
                         Text("💨")
                             .font(.system(size: 60))
@@ -110,7 +111,6 @@ struct PetMiniGameView: View {
                                 withAnimation {
                                     score += 10
                                     happiness += 5
-                                    // สุ่มตำแหน่งใหม่เมื่อกดโดน
                                     dustPositions[index] = randomPosition()
                                 }
                             }
@@ -131,7 +131,6 @@ struct PetMiniGameView: View {
         gameTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { timer in
             if timeRemaining > 0 {
                 timeRemaining -= 1
-                // ให้ฝุ่นขยับตำแหน่ง
                 withAnimation(.easeInOut(duration: 0.8)) {
                     for i in 0..<dustPositions.count {
                         if i < dustPositions.count {
@@ -140,18 +139,15 @@ struct PetMiniGameView: View {
                     }
                 }
             } else {
-                // หมดเวลา
                 timer.invalidate()
                 withAnimation {
                     isPlaying = false
-                    // ล้างข้อมูลฝุ่นทิ้งอย่างปลอดภัย
                     dustPositions.removeAll()
                 }
             }
         }
     }
     
-    // ฟังก์ชันสุ่มพิกัดให้ฝุ่น
     func randomPosition() -> CGPoint {
         let x = CGFloat.random(in: 50...300)
         let y = CGFloat.random(in: 150...500)
