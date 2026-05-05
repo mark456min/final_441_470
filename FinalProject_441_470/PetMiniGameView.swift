@@ -1,156 +1,158 @@
-//
-//  PetMiniGameView.swift
-//  FinalProject_441_470
-//
-
 import SwiftUI
 
+// MARK: - 1. สร้าง Extension สำหรับจับการเขย่าเครื่อง
+extension UIDevice {
+    static let deviceDidShakeNotification = Notification.Name(rawValue: "deviceDidShakeNotification")
+}
+
+extension UIWindow {
+    open override func motionEnded(_ motion: UIEvent.EventSubtype, with event: UIEvent?) {
+        if motion == .motionShake {
+            NotificationCenter.default.post(name: UIDevice.deviceDidShakeNotification, object: nil)
+        }
+    }
+}
+
+// Modifier เพื่อความสะดวกในการใช้งาน
+struct DeviceShakeViewModifier: ViewModifier {
+    let action: () -> Void
+
+    func body(content: Content) -> some View {
+        content
+            .onAppear()
+            .onReceive(NotificationCenter.default.publisher(for: UIDevice.deviceDidShakeNotification)) { _ in
+                action()
+            }
+    }
+}
+
+extension View {
+    func onShake(perform action: @escaping () -> Void) -> some View {
+        self.modifier(DeviceShakeViewModifier(action: action)) // ✅ ส่งค่า action ต่อเข้าไป
+    }
+}
+
+// MARK: - 2. หน้า Mini Game
 struct PetMiniGameView: View {
-    @Environment(\.presentationMode) var presentationMode
     var petState: String
     
-    @State private var isPlaying = false
-    @State private var timeRemaining = 10
-    @State private var score = 0
-    @State private var happiness = 0
+    // ระดับฝุ่น 1.0 คือฝุ่นเต็ม 100%, 0.0 คือสะอาด
+    @State private var dustLevel: CGFloat = 1.0
+    @State private var isShaking = false
     
-    @State private var dustPositions: [CGPoint] = []
-    @State private var gameTimer: Timer?
+    @Environment(\.presentationMode) var presentationMode
     
     var body: some View {
         ZStack {
-            Color.blue.opacity(0.7).ignoresSafeArea()
+            Color.black.ignoresSafeArea()
             
-            VStack {
-                // แถบเมนูด้านบน
-                HStack {
+            VStack(spacing: 40) {
+                // หัวข้อ
+                Text(dustLevel > 0 ? "เขย่าโทรศัพท์เพื่อไล่ฝุ่น! 📱💨" : "น้องสะอาดแล้ว! ✨")
+                    .font(.system(size: 28, weight: .bold, design: .rounded))
+                    .foregroundColor(.white)
+                    .multilineTextAlignment(.center)
+                
+                // กราฟิกสัตว์เลี้ยงและฝุ่น
+                                ZStack {
+                                    // 1. รูปสัตว์เลี้ยง
+                                    Image(petState)
+                                        .resizable()
+                                        .scaledToFit()
+                                        .frame(width: 220, height: 220)
+                                        // 🌟 ทำให้ภาพสัตว์เลี้ยงดูมัวและสีซีดลงตอนที่ฝุ่นเยอะ
+                                        .grayscale(Double(dustLevel))
+                                        .blur(radius: dustLevel * 6)
+                                        // เอฟเฟกต์ตอนเขย่า
+                                        .offset(x: isShaking ? CGFloat.random(in: -10...10) : 0,
+                                                y: isShaking ? CGFloat.random(in: -10...10) : 0)
+                                        .animation(.default, value: isShaking)
+                                    
+                                    // 2. กลุ่มก้อนฝุ่นที่บังหน้าสัตว์เลี้ยง
+                                    ZStack {
+                                        // สุ่มสร้างก้อนฝุ่นขึ้นมา 6 ก้อนเพื่อบังให้มิด
+                                        ForEach(0..<6, id: \.self) { _ in
+                                            Image(systemName: "cloud.dust.fill")
+                                                .resizable()
+                                                .scaledToFit()
+                                                .frame(width: CGFloat.random(in: 120...220))
+                                                // ใช้สลับสีฝุ่นเข้ม-อ่อนให้ดูมีมิติ
+                                                .foregroundColor(Color(white: Double.random(in: 0.4...0.7)))
+                                                .offset(
+                                                    x: CGFloat.random(in: -90...90),
+                                                    y: CGFloat.random(in: -90...90)
+                                                )
+                                                // หมุนก้อนฝุ่นแบบสุ่มให้ดูเป็นธรรมชาติ
+                                                .rotationEffect(.degrees(Double.random(in: -45...45)))
+                                        }
+                                    }
+                                    // 🌟 ผูกค่าความทึบแสง (Opacity) กับระดับฝุ่น เมื่อเขย่า ฝุ่นจะค่อยๆ จาง
+                                    .opacity(Double(dustLevel))
+                                    // เพิ่มแอนิเมชันให้ฝุ่นจางลงแบบนุ่มนวล
+                                    .animation(.easeInOut(duration: 0.5), value: dustLevel)
+                                }
+                // หลอดความคืบหน้า (Progress Bar)
+                VStack(spacing: 12) {
+                    Text("ระดับฝุ่นควัน")
+                        .font(.headline)
+                        .foregroundColor(.white.opacity(0.8))
+                    
+                    GeometryReader { proxy in
+                        ZStack(alignment: .leading) {
+                            Capsule()
+                                .fill(Color.white.opacity(0.15))
+                            
+                            Capsule()
+                                // เปลี่ยนสีหลอดตามระดับฝุ่น
+                                .fill(dustLevel > 0.5 ? Color.red : (dustLevel > 0 ? Color.yellow : Color.green))
+                                .frame(width: proxy.size.width * dustLevel)
+                        }
+                    }
+                    .frame(height: 24)
+                    .padding(.horizontal, 40)
+                }
+                
+                // ปุ่มเสร็จสิ้น จะแสดงเมื่อฝุ่นหมด
+                if dustLevel <= 0 {
                     Button(action: {
-                        gameTimer?.invalidate()
                         presentationMode.wrappedValue.dismiss()
                     }) {
-                        Image(systemName: "xmark.circle.fill")
-                            .font(.title)
-                            .foregroundColor(.white)
+                        Text("กลับหน้าหลัก")
+                            .font(.system(size: 18, weight: .bold, design: .rounded))
+                            .foregroundColor(.black)
+                            .padding()
+                            .frame(maxWidth: .infinity)
+                            .background(Color.green)
+                            .cornerRadius(16)
+                            .padding(.horizontal, 40)
                     }
-                    Spacer()
-                    Text("ความสุข: \(happiness) ❤️")
-                        .font(.headline)
-                        .padding(8)
-                        .background(Capsule().fill(Color.white.opacity(0.8)))
-                }
-                .padding()
-                
-                Spacer()
-                
-                // กระดานคะแนนและเวลา
-                if isPlaying {
-                    HStack(spacing: 40) {
-                        VStack {
-                            Text("เวลา")
-                            Text("\(timeRemaining)")
-                                .font(.title).bold()
-                        }
-                        VStack {
-                            Text("คะแนน")
-                            Text("\(score)")
-                                .font(.title).bold()
-                        }
-                    }
-                    .foregroundColor(.white)
-                    .padding()
-                    .background(RoundedRectangle(cornerRadius: 15).fill(Color.black.opacity(0.4)))
+                    .transition(.scale.combined(with: .opacity))
                 } else {
-                    // หน้าจอเริ่มเกม
-                    VStack(spacing: 20) {
-                        Text("🎮 ปัดฝุ่นช่วยน้อง!")
-                            .font(.largeTitle)
-                            .bold()
-                            .foregroundColor(.white)
-                        
-                        Text("จิ้มก้อนฝุ่น 💨 ที่ลอยมาให้ไวที่สุด\nก่อนที่น้องจะสูดเข้าไปเต็มปอด!")
-                            .multilineTextAlignment(.center)
-                            .foregroundColor(.white)
-                        
-                        Button(action: startGame) {
-                            Text("เริ่มเล่นเลย")
-                                .font(.title2)
-                                .bold()
-                                .padding()
-                                .frame(width: 200)
-                                .background(Color.green)
-                                .foregroundColor(.white)
-                                .cornerRadius(15)
-                                .shadow(radius: 5)
-                        }
-                    }
+                    // ดัน Layout ไม่ให้ขยับตอนปุ่มโผล่มา
+                    Spacer().frame(height: 56)
+                }
+            }
+            .padding(.vertical, 30)
+        }
+        // ตรวจจับการเขย่าเครื่อง
+        .onShake {
+            if dustLevel > 0 {
+                // สั่น Haptic Feedback ที่มือถือเพื่อให้รู้ว่ากำลังเขย่าอยู่
+                let impact = UIImpactFeedbackGenerator(style: .heavy)
+                impact.impactOccurred()
+                
+                // แอนิเมชันลดฝุ่นและการสั่นของตัวการ์ตูน
+                withAnimation(.easeOut(duration: 0.2)) {
+                    isShaking = true
+                    dustLevel -= 0.15 // เขย่า 1 ครั้งลดฝุ่น 15% (ปรับเลขนี้เพื่อเพิ่ม/ลดความยาก)
+                    if dustLevel < 0 { dustLevel = 0 }
                 }
                 
-                Spacer()
-                
-                // 🌟 แก้ไขตรงนี้: เปลี่ยนจาก Text เป็น Image ให้ดึงรูปแมวมาโชว์
-                Image(petState)
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: 180, height: 180)
-                    .offset(y: isPlaying ? -20 : 0)
-                    .animation(isPlaying ? .easeInOut(duration: 0.4).repeatForever(autoreverses: true) : .default, value: isPlaying)
-                    .padding(.bottom, 50)
-            }
-            
-            // Render ฝุ่น
-            if isPlaying {
-                ForEach(0..<dustPositions.count, id: \.self) { index in
-                    if index < dustPositions.count {
-                        Text("💨")
-                            .font(.system(size: 60))
-                            .position(dustPositions[index])
-                            .onTapGesture {
-                                let impactLight = UIImpactFeedbackGenerator(style: .light)
-                                impactLight.impactOccurred()
-                                
-                                withAnimation {
-                                    score += 10
-                                    happiness += 5
-                                    dustPositions[index] = randomPosition()
-                                }
-                            }
-                    }
+                // หยุดสั่นตัวการ์ตูนหลังจากเขย่า
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+                    isShaking = false
                 }
             }
         }
-    }
-    
-    // MARK: - Game Logic
-    func startGame() {
-        isPlaying = true
-        score = 0
-        timeRemaining = 10
-        happiness = 0
-        dustPositions = [randomPosition(), randomPosition(), randomPosition()]
-        
-        gameTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { timer in
-            if timeRemaining > 0 {
-                timeRemaining -= 1
-                withAnimation(.easeInOut(duration: 0.8)) {
-                    for i in 0..<dustPositions.count {
-                        if i < dustPositions.count {
-                            dustPositions[i] = randomPosition()
-                        }
-                    }
-                }
-            } else {
-                timer.invalidate()
-                withAnimation {
-                    isPlaying = false
-                    dustPositions.removeAll()
-                }
-            }
-        }
-    }
-    
-    func randomPosition() -> CGPoint {
-        let x = CGFloat.random(in: 50...300)
-        let y = CGFloat.random(in: 150...500)
-        return CGPoint(x: x, y: y)
     }
 }
