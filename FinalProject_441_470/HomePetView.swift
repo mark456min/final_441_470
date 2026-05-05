@@ -8,6 +8,9 @@ import SwiftUI
 struct HomePetView: View {
     @ObservedObject var viewModel: WeatherViewModel
     
+    //ดึงค่า Scale ของหน้าจอด้วยวิธีที่ถูกต้องตามมาตรฐานใหม่
+    @Environment(\.displayScale) var displayScale
+    
     @State private var showMiniGame = false
     @State private var petScale: CGFloat = 1.0
     @State private var showShareSheet = false
@@ -38,33 +41,47 @@ struct HomePetView: View {
                 
                 Spacer()
                 
-                // 🐶 ส่วนสัตว์เลี้ยง
-                                ZStack {
-                                    Circle()
-                                        .fill(Color.white.opacity(0.4))
-                                        .frame(width: 240, height: 240)
-                                    
-                                    // 👇 เปลี่ยนจาก Text เป็น Image ตรงนี้ครับ 👇
-                                    Image(viewModel.petState)
-                                        .resizable() // ทำให้รูปยืดหดได้
-                                        .scaledToFit() // จัดสัดส่วนไม่ให้รูปเบี้ยว
-                                        .frame(width: 160, height: 160) // กำหนดขนาดรูปภาพตามต้องการ
-                                        .scaleEffect(petScale)
-                                        .offset(y: isFloating ? -8 : 8)
-                                        .animation(.easeInOut(duration: 2.5).repeatForever(autoreverses: true), value: isFloating)
-                                        .onAppear { isFloating = true }
-                                        .onTapGesture {
-                                            let impact = UIImpactFeedbackGenerator(style: .medium)
-                                            impact.impactOccurred()
-                                            withAnimation(.spring(response: 0.3, dampingFraction: 0.5)) {
-                                                petScale = 1.15
-                                            }
-                                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
-                                                withAnimation { petScale = 1.0 }
-                                                showMiniGame = true
-                                            }
-                                        }
+                // 🐶 ส่วนสัตว์เลี้ยงและข้อความบอกสถานะ
+                VStack(spacing: 15) {
+                    ZStack {
+                        // วงกลมรองพื้นบางๆ
+                        Circle()
+                            .fill(Color.white.opacity(0.4))
+                            .frame(width: 240, height: 240)
+                        
+                        // แสดงรูปแมว
+                        Image(viewModel.petState)
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: 160, height: 160)
+                            .scaleEffect(petScale)
+                            .offset(y: isFloating ? -8 : 8)
+                            .animation(.easeInOut(duration: 2.5).repeatForever(autoreverses: true), value: isFloating)
+                            .onAppear { isFloating = true }
+                            .onTapGesture {
+                                let impact = UIImpactFeedbackGenerator(style: .medium)
+                                impact.impactOccurred()
+                                
+                                withAnimation(.spring(response: 0.3, dampingFraction: 0.5)) {
+                                    petScale = 1.15
                                 }
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+                                    withAnimation { petScale = 1.0 }
+                                    showMiniGame = true
+                                }
+                            }
+                    }
+                    
+                    // ข้อความบอกสถานะอารมณ์แมว (ป้ายแคปซูล)
+                    Text(getPetEmotionText(for: viewModel.aqi))
+                        .font(.system(size: 16, weight: .bold, design: .rounded))
+                        .foregroundColor(.primary)
+                        .padding(.horizontal, 20)
+                        .padding(.vertical, 10)
+                        .background(Color.white.opacity(0.8))
+                        .clipShape(Capsule())
+                        .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
+                }
                 
                 Spacer()
                 
@@ -149,6 +166,19 @@ struct HomePetView: View {
         }
     }
     
+    func getPetEmotionText(for aqi: Int) -> String {
+        switch aqi {
+        case 0...50:
+            return "อากาศดี๊ดี น้องแฮปปี้! 😸"
+        case 51...100:
+            return "ฝุ่นเริ่มมา น้องเซ็งแล้วนะ 😾"
+        case 101...150:
+            return "แค่กๆ! น้องหายใจไม่ออก 🙀"
+        default:
+            return "ไม่ไหวแล้ววว! ฝุ่นเต็มปอด 😿"
+        }
+    }
+    
     @MainActor
     func renderShareCard() -> UIImage? {
         let cardView = ZStack {
@@ -156,8 +186,12 @@ struct HomePetView: View {
             VStack(spacing: 20) {
                 Text("📍 \(viewModel.cityName)")
                     .font(.system(size: 24, weight: .bold, design: .rounded))
-                Text(viewModel.petState)
-                    .font(.system(size: 120))
+                
+                Image(viewModel.petState)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 150, height: 150)
+                
                 Text("AQI: \(viewModel.aqi)")
                     .font(.system(size: 50, weight: .black, design: .rounded))
                     .foregroundColor(aqiTextColor)
@@ -166,8 +200,10 @@ struct HomePetView: View {
             }
             .padding(40)
         }
+        
         let renderer = ImageRenderer(content: cardView)
-        renderer.scale = UIScreen.main.scale
+        //ใช้ displayScale ตัวใหม่ที่ประกาศไว้ด้านบน
+        renderer.scale = displayScale
         return renderer.uiImage
     }
 }
